@@ -1,5 +1,5 @@
 import discord
-from discord.ui import Button, View
+from discord.ui import Button, View, Select
 from discord.ext import commands
 
 from dotenv import load_dotenv
@@ -9,7 +9,7 @@ load_dotenv()
 from Bot import GUILD_ID, STDOUT_ID
 from Bot import Greetings
 
-from Bot.Promotion import Promote, Demote, HelpButton
+from Bot.Promotion import ClassMenu, Promote, Demote, HelpButton
 import random
 
 description = '''An example bot to showcase the discord.ext.commands extension
@@ -48,8 +48,14 @@ async def promote(ctx):
     await ctx.send("Click to promote or demote a Class", view=view)
 
 @bot.command()
+async def selection(ctx):
+    menu = ClassMenu()
+
+    await ctx.send("Choose the class", view= menu.view)
+ 
+@bot.command()
 async def roll(ctx, dice: str):
-    print("""Rolls a dice in NdN format.""")
+    """Rolls a dice in NdN format."""
     try:
         rolls, limit = map(int, dice.split('d'))
     except Exception:
