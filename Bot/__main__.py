@@ -27,8 +27,10 @@ bot = commands.Bot(command_prefix='><', intents= intents)
 async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('------')
-    for channel in bot.get_all_channels():
-       print(channel.name, channel.category)
+    # for x in discord.Guild.roles:
+    #     print()
+    # for channel in await bot.get_all_channels():
+    #    print(channel.name)
 
 @bot.command()
 async def promote(ctx):
