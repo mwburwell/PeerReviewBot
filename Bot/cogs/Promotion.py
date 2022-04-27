@@ -14,7 +14,7 @@ class Promotion(commands.Cog):
 		super().__init__()
 		self.bot: commands.Bot = bot
 
-	@slash_command(guild_ids=[GUILD_ID])
+	@slash_command(guild_ids=[GUILD_ID], name= "promote")
 	async def promote(self, ctx):
 		print(type(ctx))
 		classes: list[discord.Role] = []
@@ -26,10 +26,10 @@ class Promotion(commands.Cog):
 		if ctx.channel.category.name == "Teacher-Moderator":
 			promoteMenu = PromoteClassView(classes)
 
-			await ctx.send("Promote class or Demote class", view = promoteMenu)
+			await ctx.respond("Promote class or Demote class", view = promoteMenu)
 
 		else:
-			await ctx.send("You do not have permission to use this command")
+			await ctx.respond("You do not have permission to use this command")
 
 
 
@@ -140,7 +140,7 @@ class ClassSelect(Select):
 		# space_holder
 
 	async def callback(self, interaction: discord.Interaction):
-		print(self.values)
+		# print(self.values)
 		for val in self.values:
 			print(type(val))
 		return self.values
@@ -171,7 +171,7 @@ class Promote(Button):
 			categories = role.guild.categories
 			for cat in categories:
 				if cat.name.startswith("Module"):
-					cat.create_text_channel()
+					# cat.create_text_channel()
 					print(cat)
 					perm: discord.permissions.Permissions = cat.permissions_for(role)
 					print(perm.view_channel)

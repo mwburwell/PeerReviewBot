@@ -10,7 +10,7 @@ class Default(commands.Cog):
 		await ctx.send(
 			embed= discord.Embed(
 				title="Ping",
-				description=f"My ping is: {round(self.bot.latency * 100, 2)} ms",
+				description=f"My ping is: {round(self.bot.latency * 100, 2)} milliseconds",
 				color=discord.Colour.blue()
 		))
 
