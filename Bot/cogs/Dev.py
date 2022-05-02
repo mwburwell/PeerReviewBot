@@ -6,7 +6,7 @@ class Dev(commands.Cog):
 		self.bot: commands.Bot = bot
 
 	@commands.group()
-	async def cog(self, ctx):
+	async def cog(self, ctx: commands.Context):
 		pass
 
 	@cog.command()
