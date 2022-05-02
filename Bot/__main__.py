@@ -1,4 +1,4 @@
-from discord import Intents, command
+from discord import Intents
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
@@ -19,10 +19,9 @@ async def on_ready():
 	print(f"{bot.user} has logged in!")
 
 
-cogfiles = []
+cogfiles: list[str] = []
 for filename in os.listdir("./Bot/cogs/"):
     if filename.endswith(".py"):
-        print(filename)
         cogfiles.append(f"Bot.cogs.{filename[:-3]}")
 
 for cogfile in cogfiles:
