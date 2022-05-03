@@ -3,6 +3,7 @@ from discord import Intents
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
+from Bot import GUILD_ID
 
 from Bot.AddModules import DropdownView
 load_dotenv()
@@ -19,7 +20,11 @@ bot = commands.Bot(command_prefix= prefix, intents= intents)
 
 @bot.event
 async def on_ready():
-	print(f"{bot.user} has logged in!")
+    for guild in bot.guilds:
+        print(guild.id)
+    await bot.register_commands()
+    GUILD_ID = [guild.id for guild in bot.guilds]
+    print(f"{bot.user} has logged in!")
 
 
 cogfiles: list[str] = []
