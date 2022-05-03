@@ -5,6 +5,8 @@ import os
 from dotenv import load_dotenv
 from Bot import GUILD_ID
 
+from .Teacher import Teacher
+
 from Bot.AddModules import DropdownView
 load_dotenv()
 
@@ -18,10 +20,21 @@ intents.guilds = True
 
 bot = commands.Bot(command_prefix= prefix, intents= intents)
 
+
+
 @bot.event
 async def on_ready():
-    for guild in bot.guilds:
-        print(guild.id)
+    # for guild in bot.guilds:
+    #     if guild.name == "PeerReviewBotTestingCenter":
+    #         print(f"Guild name: {guild.name}")
+    #         print(guild.id)
+    #         print("\nRoles: ")
+    #         for role in guild.roles:
+    #             print(f"\nName: {role.name}")
+    #             print("Permssions: ")
+    #             for permission in role.permissions:
+    #                 print(permission)
+    
     await bot.register_commands()
     GUILD_ID = [guild.id for guild in bot.guilds]
     print(f"{bot.user} has logged in!")
