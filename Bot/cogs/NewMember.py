@@ -72,7 +72,7 @@ class NewMember(commands.Cog):
             oldClassRooms = [role.name for role in ctx.guild.roles]
             if classroom not in oldClassRooms:
                 await ctx.guild.create_role(name=classroom, colour=newColor)
-                await ctx.send("New Class added")
+                await ctx.send(f"New Class added {classroom}")
             else:
                 await ctx.send("Class is already in the Guild")
         else:
