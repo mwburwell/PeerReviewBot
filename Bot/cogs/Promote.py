@@ -14,23 +14,24 @@ class Promote(commands.Cog):
 		self.bot: commands.Bot = bot
 
 	@commands.command()
-	async def promotion(self, ctx: commands.Context):
-		print("\nPromotion Command: ")
-		classes: list[discord.Role] = []
+	async def promote(self, ctx: commands.Context):
+		if ctx.author.guild_permissions.administrator:
+			print("\nPromotion Command: ")
+			classes: list[discord.Role] = []
 
-		# get all of the rolles in the guild that end with classroom
-		for role in ctx.guild.roles:
-			if role.name.startswith('class'):
-				classes.append(role)
+			# get all of the rolles in the guild that end with classroom
+			for role in ctx.guild.roles:
+				if role.name.startswith('class'):
+					classes.append(role)
 
-		if ctx.channel.category.name.startswith("Teacher"):#== "TEACHERS_CHANNEL":
 			promoteMenu = PromoteClassView(classroomRoles= classes)
 			await ctx.send("Promote class or Demote class", view = promoteMenu)
+
 		else:
 			await ctx.send("You do not have permission to use this command")
 
-	@slash_command(guild_ids=GUILD_ID, name= "promote")
-	async def promote(self, ctx: discord.commands.context.ApplicationContext):
+	@slash_command(guild_ids=GUILD_ID, name= "promotion")
+	async def promotion(self, ctx: discord.commands.context.ApplicationContext):
 		print("\nPromote Slash Command: ")
 		classes: list[discord.Role] = []
 
