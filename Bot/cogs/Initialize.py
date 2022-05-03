@@ -1,3 +1,4 @@
+from multiprocessing import Event
 from typing import ValuesView
 import discord 
 from discord.ext import commands
@@ -6,20 +7,19 @@ import discord.ui
 from Bot import Readme
 from Bot.AddModules import DropdownView
 
-
 class Initaillization(discord.Cog):
     def __init__(self, bot) -> None:
         super().__init__()
         self.bot: commands.Bot = bot
 
-    @commands.command()
+    @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
         """Checks for response form bot"""
+        print(f"\nguild joined: {guild.name}")
         teacher = await self.createTeacherRole(guild)
-        await self.addChannelsToTeacherCategory(teacher, guild)
+        modChannel = await self.addChannelsToTeacherCategory(teacher, guild)
 
-        modChannel = guild.fetch_channel(self.getTeacherChannelID(guild))
-        modChannel.send("How many modules would you like?", view=DropdownView())
+        await modChannel.send("How many modules would you like?", view=DropdownView())
 
     @commands.command()
     async def add_modules(self, ctx: commands.context.Context):
@@ -34,18 +34,21 @@ class Initaillization(discord.Cog):
 
 
 
-    async def addChannelsToTeacherCategory(self, teacher: discord.Role, guild: discord.Guild):
+    async def addChannelsToTeacherCategory(self, teacher: discord.Role, guild: discord.Guild) ->discord.TextChannel:
         categoryNames = [category.name for category in guild.categories]
         if "Teacher-Moderator" not in categoryNames:
             category = await guild.create_category("Teacher-Moderator")
-            await self.createModChannels(teacher, category, guild)
+            return await self.createModChannels(teacher, category, guild)
         else:
             for category in guild.categories:
                 channelNames = [channel.name for channel in category.channels]
                 if "moderate-classroom" not in channelNames and category.name == "Teacher-Moderator":
-                    await self.createModChannels(teacher, category, guild)
+                    return await self.createModChannels(teacher, category, guild)
                 else:
                     print("Already have channels in teacher moderator")
+                    for channel in category.channels:
+                        if channel.name == "moderate-classroom":
+                            return channel
 
 
     async def createTeacherRole(self, guild: discord.Guild) -> discord.Role:
@@ -75,13 +78,14 @@ class Initaillization(discord.Cog):
 
         # create the teacher / moderator channel.  This channel will be used to
         # access the bot
-        await category.create_text_channel("moderate-classroom", overwrites=overwrites)
         
         # create the bot info channel.  This channel will have information for
         # the bot
+
         botInfoChannel = await category.create_text_channel("Bot-Info", overwrites=overwrites)
+        await category.create_text_channel("Moderator-Text-Channel", overwrites=overwrites)
         await botInfoChannel.send(Readme.Readme.Readme())
-        return botInfoChannel
+        return await category.create_text_channel("moderate-classroom", overwrites=overwrites)
 
 
     async def createModeratorRole(self,member: discord.Member, guild: discord.Guild) -> discord.Role:
