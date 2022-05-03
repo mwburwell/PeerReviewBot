@@ -1,8 +1,10 @@
+import discord
 from discord import Intents
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
 
+from Bot.AddModules import DropdownView
 load_dotenv()
 
 prefix = commands.when_mentioned_or("><")
@@ -11,6 +13,7 @@ token = os.environ['TOKEN']
 intents = Intents.default()
 intents.members = True
 intents.message_content = True
+intents.guilds = True
 
 bot = commands.Bot(command_prefix= prefix, intents= intents)
 
