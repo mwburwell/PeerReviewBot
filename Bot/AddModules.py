@@ -70,11 +70,15 @@ class Dropdown(discord.ui.Select):
 			if bestOf not in channelList and category.name.startswith("Module"):
 				await category.create_text_channel(name=bestOf, overwrites=overwrites)
 
-		await interaction.response.send_message("Your Module channels are all set up")
+		await interaction.response.edit_message(content="Your Module channels are all set up")
 
 class DropdownView(discord.ui.View):
-    def __init__(self):
-        super().__init__()
-        # Adds the dropdown to our view object.
-        self.add_item(Dropdown())      
-
+	def __init__(self):
+		super().__init__()
+		# Adds the dropdown to our view object.
+		self.add_item(Dropdown())      
+		
+	async def interaction_check(self, interaction: discord.Interaction) -> bool:
+		self.clear_items()
+		await interaction.response.edit_message(content="Your Modules have been set up.", view = self)
+		pass
