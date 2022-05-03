@@ -1,4 +1,6 @@
+from bdb import Breakpoint
 from cgitb import text
+from xml.etree.ElementPath import prepare_child
 import discord
 from discord import Interaction
 from discord.ui import Button, View, Select
@@ -51,42 +53,47 @@ class PromoteClassView(View):
 
 	async def interaction_check(self, interaction: Interaction) -> bool:
 		print("\nPromote Class View Interaction Check: ")
-		# if the interaction is of selection component type then we
-		# will add buttons and display what the user selected.
-		# we can also pass the selected ROLES into the buttons to
-		# do what we need to them.
-		if interaction.data['component_type'] == 3:
+		if interaction.user.guild_permissions.administrator:
+			# if the interaction is of selection component type then we
+			# will add buttons and display what the user selected.
+			# we can also pass the selected ROLES into the buttons to
+			# do what we need to them.
+			if interaction.data['component_type'] == 3:
 
-			self.choices = self.getUserChoices(interaction= interaction)
-			self.refineRoles(self.roles, self.choices)
-			
-			self.clear_items()
-			self.add_item(Promote(self.roles))
-			self.add_item(Demote(self.roles))
-			self.add_item(HelpButton())
-			await interaction.response.edit_message(
-				embed= discord.Embed(
-					color= discord.Colour.red(), 
-					title= self.buildClassList(self.choices),
-					description= "Choose:\npromote - to move a class forward\ndemote - to move a class backward\ncancel - to cancel promotion\nhelp - to get instructions"
-					),
-				view=self)
+				self.choices = self.getUserChoices(interaction= interaction)
+				self.refineRoles(self.roles, self.choices)
+				
+				self.clear_items()
+				self.add_item(Promote(self.roles))
+				self.add_item(Demote(self.roles))
+				self.add_item(Cancel())
+				self.add_item(HelpButton())
+				await interaction.response.edit_message(
+					embed= discord.Embed(
+						color= discord.Colour.red(), 
+						title= self.buildClassList(self.choices),
+						description= "Choose:\npromote - to move a class forward\ndemote - to move a class backward\ncancel - to cancel promotion\nhelp - to get instructions"
+						),
+					view=self)
 
-		# after the selection is gotten rid of we have buttons left over,
-		# the buttons will handle the ROLE changing
-		# this is only after the buttons are selected we will get rid of the
-		# menu
-		elif interaction.data['component_type'] < 3:
+			# after the selection is gotten rid of we have buttons left over,
+			# the buttons will handle the ROLE changing
+			# this is only after the buttons are selected we will get rid of the
+			# menu
+			elif interaction.data['component_type'] < 3:
+				self.clear_items()
+				
+				await interaction.response.edit_message(
+					embed= discord.Embed(
+						color = discord.Color.blue(),
+						title= self.buildClassList(self.choices),
+						description= "Finished Promotion"
+					), 
+					view=self)
+				self.stop()
+		else:
 			self.clear_items()
-			
-			await interaction.response.edit_message(
-				embed= discord.Embed(
-					color = discord.Color.blue(),
-					title= self.buildClassList(self.choices),
-					description= "Classes have been promoted" if len(self.classList) > 1 else "Has been promoted"
-				), 
-				view=self)
-			self.stop()
+			await interaction.response.edit_message(content="You do not have permission for this action.", view=self)
 
 		return await super().interaction_check(interaction)
 
@@ -152,66 +159,86 @@ class Promote(Button):
 
 	async def callback(self, interaction: discord.Interaction):
 		print("\nPromote Button Callback:")
-		for role in self.roles:
-			print(f"\nRole: {role.name}")
-			categories = role.guild.categories
-			# previousCategory: categories
-			
-			# search through each category and see if the current
-			# role can access channels in that category if it can
-			# move on to the next one.
-			#
-			# if we find a category that they can not read then this
-			# is the next level for that role and we create private
-			# channels for them.
-			for cat in categories:
+		if interaction.user.guild_permissions.administrator:
+			for role in self.roles:
+				print(f"\nRole: {role.name}")
+				categories = role.guild.categories
+				# previousCategory: categories
+				
+				# search through each category and see if the current
+				# role can access channels in that category if it can
+				# move on to the next one.
+				#
+				# if we find a category that they can not read then this
+				# is the next level for that role and we create private
+				# channels for them.
+				for category in categories:
+					isHiddenCategory = True
+					
+					overwrites = {
+						interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+						interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
+						role: discord.PermissionOverwrite(read_messages=True)
+					}
 
-				overwrites = {
-					interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-					interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
-					role: discord.PermissionOverwrite(read_messages=True)
-				}
-				# the overwrites needed to create a secret channel
-				if cat.name.startswith("Module"):
-					# cat.create_text_channel()
-					print(cat)
-					perm: discord.permissions.Permissions = cat.permissions_for(role)
-					print(perm.view_channel)
-					for p in perm:
-						print(p)
-					if not perm.view_channel:
-						textChannel:str = "chat-" + role.name
-						prChannel: str = "pr-" + role.name
+					# the overwrites needed to create a secret channel
+					if category.name.startswith("Module"):
 
+						# cat.create_text_channel()
+						print(category)
+						# perm: discord.permissions.Permissions = cat.permissions_for(role)
+						# print(perm.view_channel)
 
-						print(f"Perm type: {type(perm)}")
-						print(f"checking permission on category: {role.name}")
-
-						if not self.hasChannel(cat, textChannel):
-							await cat.create_text_channel(name=textChannel, overwrites=overwrites)
+						# print(f"Perm type: {type(perm)}")
+						for channel in category.channels:
+							print(role.name, category.name, channel.name, channel.permissions_for(role).read_messages)
+							if channel.permissions_for(role).read_messages:
+								isHiddenCategory = False
+								break
+							# else:
+							# 	isHiddenCategory = True
 							
-						if not self.hasChannel(cat, prChannel):
-							await cat.create_text_channel(name=prChannel, overwrites=overwrites)
-
-						await cat.edit(overwrites={role: discord.PermissionOverwrite(view_channel=True)})
 
 
-						print(f"Create channels in {cat.name}")
+						if isHiddenCategory:
+							textChannel:str = "chat-" + role.name
+							prChannel: str = "pr-" + role.name
+							print(f"Create channels: {textChannel} and {prChannel} in {category.name}")
 
-						# we will break because we do not want all of the categories
-						# that they have false but the latest one
-						break
+							if not self.hasChannel(category, textChannel) :
+								await category.create_text_channel(name=textChannel, overwrites=overwrites)
+							else:
+								channels = category.channels
+								for channel in channels:
+									if channel.name == textChannel:
+										await channel.edit(overwrites={role: discord.PermissionOverwrite(read_messages=True)})
+								
+							if not self.hasChannel(category, prChannel):
+								await category.create_text_channel(name=prChannel, overwrites=overwrites)
+							else:
+								channels = category.channels
+								for channel in channels:
+									if channel.name == prChannel:
+										await channel.edit(overwrites={role: discord.PermissionOverwrite(read_messages=True)})
+							break
 
-				if cat == categories[len(categories) - 1]:
-					print("NEED TO IMPLEMENT LEGACY PROMOTION")
-				# cat = previousCategory
-		await interaction.followup.send(content="Class has been Promoted")
+
+
+							# we will break because we do not want all of the categories
+							# that they have false but the latest one
+					if category == categories[len(categories) - 1]:
+						print("NEED TO IMPLEMENT LEGACY PROMOTION")
+					# cat = previousCategory
+			await interaction.followup.send(content="Class has been Promoted")
+		else:
+			await interaction.response.edit_message(content="You do not have permission.")
+
 		return await super().callback(interaction)
 
 	def hasChannel(self, category: discord.CategoryChannel, channelName: str) -> bool:
-		for channel in category.channels:
-			if channel.name == channelName:
-				return True
+		channelNames = [channel.name for channel in category.channels]
+		if channelName in channelNames:
+			return True
 
 		return False
 
@@ -230,7 +257,7 @@ class Promote(Button):
 
 class Demote(Button):
 	def __init__(self, roles: list[discord.Role], label: str = "Demote", row: int = 2):
-		super().__init__(style=discord.ButtonStyle.green, label=label, row=row)
+		super().__init__(style=discord.ButtonStyle.danger, label=label, row=row)
 
 		self.roles = roles
 
@@ -241,30 +268,78 @@ class Demote(Button):
 
 
 	async def callback(self, interaction: discord.Interaction):
-		print("\nDemote Button Callback:")
-		for role in self.roles:
-			print(f"\nRole: {role.name}")
-			categories = role.guild.categories
-			for cat in categories:
-				overwrites = {
-					interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-					role: discord.PermissionOverwrite(read_messages=False)
-				}
-				if cat.name.startswith("Module"):
-					# cat.create_text_channel()
-					print(cat)
-					perm: discord.permissions.Permissions = cat.permissions_for(role)
-					print(perm.view_channel)
-					if not perm.view_channel:
-						print(f"Previous Category: {previousCategory}")
-						for channel in previousCategory.channels:
-							print(f"removing viewing for {role.name} in {channel.name}")
-							await channel.edit(overwrites=overwrites)
-						await cat.edit(overwrites= overwrites)
-						break
-					previousCategory = cat
+		print("\Demotion Button Callback:")
+		if interaction.user.guild_permissions.administrator:
+			for role in self.roles:
+				print(f"\nRole: {role.name}")
+				categories = role.guild.categories
+				# previousCategory: categories
+				
+				# search through each category and see if the current
+				# role can access channels in that category if it can
+				# move on to the next one.
+				#
+				# if we find a category that they can not read then this
+				# is the next level for that role and we create private
+				# channels for them.
+				previousCategory: discord.CategoryChannel = None
+				for category in categories:
+					isHiddenCategory = True
+					
+					overwrites = {
+						interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+						interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
+						role: discord.PermissionOverwrite(read_messages=False)
+					}
 
-		await interaction.followup.send(content="Class has been Demoted")
+					# the overwrites needed to create a secret channel
+					if category.name.startswith("Module"):
+
+						# cat.create_text_channel()
+						print(category)
+						# perm: discord.permissions.Permissions = cat.permissions_for(role)
+						# print(perm.view_channel)
+
+						# print(f"Perm type: {type(perm)}")
+						for channel in category.channels:
+							print(role.name, category.name, channel.name, channel.permissions_for(role).read_messages)
+							if channel.permissions_for(role).read_messages:
+								isHiddenCategory = False
+								break
+							# else:
+							# 	isHiddenCategory = True
+							
+
+
+						if isHiddenCategory:
+							textChannel:str = "chat-" + role.name
+							prChannel: str = "pr-" + role.name
+
+							if previousCategory != None:
+								print(f"Removing channels: {textChannel} and {prChannel} in {previousCategory.name}")
+								channels = previousCategory.channels
+								for channel in channels:
+									if channel.name == textChannel:
+										await channel.edit(overwrites=overwrites)
+									
+								for channel in channels:
+									if channel.name == prChannel:
+										await channel.edit(overwrites=overwrites)
+								await interaction.followup.send(content=f"Class {role.name} has been Demoted")
+							else:
+								await interaction.followup.send(content=f"Class {role.name} can not be Demoted")
+							break
+
+
+
+							# we will break because we do not want all of the categories
+							# that they have false but the latest one
+						previousCategory = category
+					# cat = previousCategory
+		else:
+			await interaction.response.edit_message(content="You do not have permission.")
+
+		return await super().callback(interaction)
 
 		# TO DO 
 		# 1. need to change permissions to move to the next channel
@@ -282,6 +357,13 @@ class Cancel(Button):
 	def __init__(self, label: str = "Cancel", row: int = 2):
 		super().__init__(style=discord.ButtonStyle.grey, label=label, row=row)
 
+	async def callback(self, interaction: Interaction):
+		if interaction.user.guild_permissions.administrator:
+			await interaction.followup.send(content="Canceled Promotion Menu")
+		else:
+			await interaction.followup.send(content="You do not have permission.")
+
+		return await super().callback(interaction)
 
 class HelpButton(Button):
 	# This is a help button that will direct the user to the documentation for
