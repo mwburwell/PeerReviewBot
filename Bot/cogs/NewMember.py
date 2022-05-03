@@ -20,17 +20,63 @@ class NewMember(commands.Cog):
 
     @commands.command()
     async def new_teacher(self, ctx: commands.context.Context, teacher: discord.Member):
-        #if ctx.author.guild_permissions.administrator or 
-        print(type(ctx))
-        pass
+        if ctx.author.guild_permissions.administrator:
+            newMembers: list[discord.Member] = []
+            for member in ctx.guild.members:
+                if discord.Role.is_default(member.roles):
+                    newMembers.append(member.name)
+
+            if teacher.name not in newMembers:
+                await ctx.send(f"The new teacher must be a new member: {teacher.name} is not a new member")
+                return
+
+            for role in ctx.guild.roles:
+                if role.name == "Teacher-Moderator":
+                    teacher.add_roles(role)
+
+            await ctx.send("Completed!")
+        else:
+            await ctx.send("You do not have permission to use this command")
 
     @commands.command()
-    async def new_student(self, ctx, student: discord.Member):
-        pass
+    async def new_student(self, ctx: commands.context.Context, student: discord.Member, classroom: discord.Role):
+        if ctx.author.guild_permissions.administrator:
+            newMembers: list[discord.Member] = []
+            for member in ctx.guild.members:
+                if discord.Role.is_default(member.roles):
+                    newMembers.append(member.name)
+            
+            if student.name not in newMembers:
+                await ctx.send(f"The new student must be a new member: {student.name} is not a new member")
+                return
+
+            if classroom.name in [role.name for role in ctx.guild.roles]:
+                await ctx.send("Completed")
+                await student.add_roles(classroom)
+
+        else:
+            await ctx.send("You do not have permission to use this command")
 
     @commands.command()
-    async def new_classroom(self, ctx, classroom: str):
-        pass
+    async def new_classroom(self, ctx: commands.context.Context, classroom: str):
+        # need to modify this command to not allow for entering the new classroom
+        # instead use a time and date function to fill in the semester and class
+        # year
+        if ctx.author.guild_permissions.administrator:
+            oldColors = [role.color.value for role in ctx.guild.roles]
+
+            newColor = discord.Color.random()
+            while newColor.value in oldColors:
+                newColor = discord.Color.random()
+
+            oldClassRooms = [role.name for role in ctx.guild.roles]
+            if classroom not in oldClassRooms:
+                await ctx.guild.create_role(name=classroom, colour=newColor)
+                await ctx.send("New Class added")
+            else:
+                await ctx.send("Class is already in the Guild")
+        else:
+            await ctx.send("You do not have permission to use this command")
 
     @slash_command(
         guild_ids=[958468593358626816],
