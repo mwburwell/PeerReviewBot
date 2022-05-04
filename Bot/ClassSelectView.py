@@ -3,7 +3,7 @@ import discord
 import discord.ui
 
 class ClassSelect(discord.ui.Select):
-    def __init__(self, guild, newclass):
+    def __init__(self, guild, newclass: discord.Role):
         self.guild = guild
         self.newclass = newclass
         self.flag = True
@@ -39,4 +39,4 @@ class ClassSelectView(discord.ui.View):
         self.newclass = newclass
         super().__init__()
         # Adds the dropdown to our view object.
-        self.add_item(ClassSelect(self.guild, self.newclass))   
+        self.add_item(ClassSelect(self.guild, self.newclass))

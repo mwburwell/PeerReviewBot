@@ -1,10 +1,9 @@
-from multiprocessing import Event
-from typing import ValuesView
-import discord 
+import discord
+from discord import slash_command
 from discord.ext import commands
 import discord.ui
 
-from Bot import Readme
+from Bot import GUILD_ID, Readme
 from Bot.AddModules import DropdownView
 
 class Initaillization(discord.Cog):
@@ -22,6 +21,17 @@ class Initaillization(discord.Cog):
         await modChannel.send("How many modules would you like?", view=DropdownView())
 
     @commands.command()
+    async def new_modules(self, ctx: commands.context.Context):
+        """Checks for response form bot"""
+        if ctx.author == ctx.guild.owner or ctx.author.guild_permissions.administrator:
+            teacher = await self.createTeacherRole(ctx.guild)
+            await self.addChannelsToTeacherCategory(teacher, ctx.guild)
+
+            await ctx.send("How many modules would you like?", view=DropdownView())            
+        else:
+            ctx.send("You do not have permission to use this command")
+
+    @slash_command(guild_ids=GUILD_ID, name="add_modules", description="Add's categories of modules by choice to the server")
     async def add_modules(self, ctx: commands.context.Context):
         """Checks for response form bot"""
         if ctx.author == ctx.guild.owner or ctx.author.guild_permissions.administrator:

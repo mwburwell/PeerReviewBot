@@ -5,6 +5,7 @@ import discord
 from discord import Interaction
 from discord.ui import Button, View, Select
 
+
 class PromoteClassView(View):
 	def __init__(self, classroomRoles: list[discord.Role] =[], members: list[discord.Member] = [], timeout: float = 180):
 		super().__init__(timeout=timeout)
@@ -159,7 +160,12 @@ class Promote(Button):
 
 	async def callback(self, interaction: discord.Interaction):
 		print("\nPromote Button Callback:")
+		teacher: discord.Role
 		if interaction.user.guild_permissions.administrator:
+			for role in interaction.guild.roles:
+				if role.name == "Teacher-Moderator":
+					teacher = role
+
 			for role in self.roles:
 				print(f"\nRole: {role.name}")
 				categories = role.guild.categories
@@ -178,7 +184,8 @@ class Promote(Button):
 					overwrites = {
 						interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
 						interaction.guild.me: discord.PermissionOverwrite(read_messages=True),
-						role: discord.PermissionOverwrite(read_messages=True)
+						role: discord.PermissionOverwrite(read_messages=True),
+						teacher: discord.PermissionOverwrite(read_messages=True)
 					}
 
 					# the overwrites needed to create a secret channel
