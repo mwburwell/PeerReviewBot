@@ -31,11 +31,11 @@ async def on_ready():
     print(f"{bot.user} has logged in!")
 
 @bot.slash_command(name="moderator", description="Makes a member a teacher or moderator.",guild_ids=GUILD_ID)
-async def moderator(self, ctx: commands.context.Context, teacher: discord.Member):
+async def moderator(ctx: commands.context.Context, teacher: discord.Member):
     if ctx.author.guild_permissions.administrator:
         newMembers: list[discord.Member] = []
         for member in ctx.guild.members:
-            if discord.Role.is_default(member.roles):
+            if len(member.roles) == 1:
                 newMembers.append(member.name)
 
         if teacher.name not in newMembers:
@@ -50,8 +50,8 @@ async def moderator(self, ctx: commands.context.Context, teacher: discord.Member
     else:
         await ctx.send("You do not have permission to use this command")
 
-@bot.slash_command(guild_ids=GUILD_ID, name="classroom", description="WHAT THE Hell!!!",)
-async def classroom(self, ctx: commands.context.Context, classroom: str):
+@bot.slash_command(guild_ids=GUILD_ID, name="classroom", description="Add a classroom to the server",)
+async def classroom(ctx: commands.context.Context, classroom: str):
     # need to modify this command to not allow for entering the new classroom
     # instead use a time and date function to fill in the semester and class
     # year
@@ -59,6 +59,8 @@ async def classroom(self, ctx: commands.context.Context, classroom: str):
         oldColors = [role.color.value for role in ctx.guild.roles]
 
         newColor = discord.Color.random()
+        print("old Colors: ", oldColors)
+        print("new colors: ", newColor.value)
         while newColor.value in oldColors:
             newColor = discord.Color.random()
 
@@ -73,11 +75,11 @@ async def classroom(self, ctx: commands.context.Context, classroom: str):
 
 
 @bot.slash_command(guild_ids=GUILD_ID, name="student", description="Makes a member a student.")
-async def student(self, ctx: commands.context.Context, student: discord.Member, classroom: discord.Role):
+async def student(ctx: commands.context.Context, student: discord.Member, classroom: discord.Role):
     if ctx.author.guild_permissions.administrator:
         newMembers: list[discord.Member] = []
         for member in ctx.guild.members:
-            if discord.Role.is_default(member.roles):
+            if len(member.roles) == 1:
                 newMembers.append(member.name)
         
         if student.name not in newMembers:
@@ -95,7 +97,7 @@ async def student(self, ctx: commands.context.Context, student: discord.Member, 
 
 
 @bot.slash_command(guild_ids=GUILD_ID, name= "advancement", description="Alter's a classes permissions to allow viewing of the next module or demoting to the previous module")
-async def advancement(self, ctx: discord.commands.context.ApplicationContext):
+async def advancement(ctx: discord.commands.context.ApplicationContext):
     if ctx.author.guild_permissions.administrator:				
         print("\nPromote Slash Command: ")
         classes: list[discord.Role] = []
